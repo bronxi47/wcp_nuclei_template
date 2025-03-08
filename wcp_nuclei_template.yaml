@@ -1,0 +1,51 @@
+id: cacheable-header-injection
+info:
+  name: Cacheable Header Injection
+  author: bronxi
+  severity: medium
+  description: Checks for the presence of cacheable header injection vulnerabilities.
+
+requests:
+  - raw:
+      - |
+        GET {{BaseURL}}?catch_hunter={{numbers}} HTTP/2
+        Host: {{Hostname}}
+
+      - |
+        GET {{BaseURL}}?catch_hunter={{numbers}} HTTP/2
+        Host: {{Hostname}}
+        {{headers}}: gokuAndMilk
+
+    stop-at-first-match: false
+    race: true
+    read-all: true
+    
+    attack: pitchfork
+    payloads:
+      headers: helpers/wordlists/header-injection.txt
+      numbers: helpers/wordlists/cb_numbers.txt
+    
+    matchers-condition: or
+    matchers:
+      - type: word
+        words:
+          - "gokuAndMilk"
+        part: body
+        condition: and
+
+      - type: word
+        words:
+          - "gokuAndMilk"
+        part: header
+        condition: and
+        
+      - type: dsl
+        dsl:
+          - "contains(header, 'gokuAndMilk') || contains(body, 'gokuAndMilk')"
+        condition: and
+
+    extractors:
+      - type: regex
+        part: response
+        regex:
+          - "gokuAndMilk"
